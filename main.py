@@ -4,18 +4,19 @@ from pydantic import BaseModel
 from bs4 import BeautifulSoup
 import re
 
-# IMPORTANT: Download models before importing evaluator
-from download_models import ensure_models_exist
-print("Checking for model files...")
-ensure_models_exist()
-
 from phishing_evaluator import PhishingEvaluator
+from download_models import ensure_models_exist
 
 app = FastAPI(
     title="Ensemble Phishing Detection API",
     version="1.0.0",
     description="Detect phishing emails using an ensemble of ML models"
 )
+
+@app.on_event("startup")
+def startup_event():
+    print("Checking for model files...")
+    ensure_models_exist()
 
 evaluator = PhishingEvaluator(threshold=0.6)
 
