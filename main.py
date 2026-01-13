@@ -438,9 +438,9 @@ def predict_form_post(
         icon = "⚠️" if is_phishing else "✅"
 
         # Full-precision scores from both models and max
-        score_1 = result['phishing_score_model1']
-        score_2 = result['phishing_score_model2']
-        max_score = result['max_phishing_score']
+        score_1 = round(result['phishing_score_model1']*100, 4)
+        score_2 = round(result['phishing_score_model2']*100, 4)
+        max_score = round(result['max_phishing_score']*100, 4)
 
         # HTML template with full-precision scores
         html = f"""
