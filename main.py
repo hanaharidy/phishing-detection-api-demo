@@ -434,9 +434,9 @@ def predict_form_post(
         bg_color = "#fff5f5" if is_phishing else "#f0fff4"
         icon = "⚠️" if is_phishing else "✅"
         
-        score_percent_1 = int(result['phishing_score_model1'] * 100)
-        score_percent_2 = int(result['phishing_score_model2'] * 100)
-        max_score_percent = int(result['max_phishing_score'] * 100)
+        score_display_1 = round(result['phishing_score_model1'], 4)
+        score_display_2 = round(result['phishing_score_model2'], 4)
+        max_score_display = round(result['max_phishing_score'], 4)
 
         html = f"""
         <!DOCTYPE html>

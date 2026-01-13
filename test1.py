@@ -66,7 +66,7 @@ def predict_single_email(
     predicted_label = int(phishing_score >= threshold)
 
     return {
-        "phishing_score": round(float(phishing_score), 4),
+        "phishing_score": float(phishing_score),
         "predicted_label": predicted_label,
         "prediction": "phishing" if predicted_label == 1 else "legitimate"
     }
