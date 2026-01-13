@@ -6,13 +6,23 @@ from defense_model2 import EmailClassifier
 MODEL_FILE = "modelparameters2.pkl"
 
 _classifier = EmailClassifier()
-_classifier.load_model(MODEL_FILE)
+_MODEL_LOADED = False
+
+def _ensure_model_loaded():
+    global _MODEL_LOADED
+    if not _MODEL_LOADED:
+        if not os.path.exists(MODEL_FILE):
+            raise FileNotFoundError(f"{MODEL_FILE} not found")
+        _classifier.load_model(MODEL_FILE)
+        _MODEL_LOADED = True
+
 
 def predict_single_email(subject: str, sender: str, body: str, threshold: float = 0.5):
     """
     Predict phishing score and label for a single email.
     This function can be imported and used anywhere (API, UI, CLI).
     """
+    _ensure_model_loaded()
 
     email_df = pd.DataFrame([{
         "subject": subject,

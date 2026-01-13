@@ -6,7 +6,16 @@ from Defense_Scripts.defense_model1 import PhishingDefenseSystem
 MODEL_PATH = "phishing_model.pkl"
 
 _system = PhishingDefenseSystem()
-_system.load_model(MODEL_PATH)
+_MODEL_LOADED = False
+
+def _ensure_model_loaded():
+    global _MODEL_LOADED
+    if not _MODEL_LOADED:
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError(f"{MODEL_PATH} not found")
+        _system.load_model(MODEL_PATH)
+        _MODEL_LOADED = True
+
 
 def predict_from_excel(
     input_file: str,
@@ -14,8 +23,9 @@ def predict_from_excel(
     sheet_name: str = "Predictions",
     threshold: float = 0.5
 ):
-    df_test = pd.read_excel(input_file)
+    _ensure_model_loaded()
 
+    df_test = pd.read_excel(input_file)
     df_test = _system.preprocess(df_test)
     X_test = _system.transform(df_test)
 
@@ -41,6 +51,7 @@ def predict_single_email(
     Predict phishing score and label for a single email.
     Can be imported and used anywhere (API, UI, CLI).
     """
+    _ensure_model_loaded()
 
     email_df = pd.DataFrame([{
         "subject": subject,
