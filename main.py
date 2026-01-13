@@ -421,23 +421,28 @@ def predict_form_post(
     body: str = Form(...)
 ):
     try:
+        # Clean the email body
         cleaned_body = clean_html(body)
 
+        # Get prediction from the ensemble evaluator
         result = evaluator.classify_single_email(
             subject=subject,
             sender=sender,
             body=cleaned_body
         )
 
+        # Determine phishing or safe
         is_phishing = result['result'] == "PHISHING"
         color = "#e53e3e" if is_phishing else "#38a169"
         bg_color = "#fff5f5" if is_phishing else "#f0fff4"
         icon = "⚠️" if is_phishing else "✅"
-        
-        score_display_1 = result['phishing_score_model1']
-        score_display_2 = result['phishing_score_model2']
-        max_score_display = result['max_phishing_score']
 
+        # Full-precision scores from both models and max
+        score_1 = result['phishing_score_model1']
+        score_2 = result['phishing_score_model2']
+        max_score = result['max_phishing_score']
+
+        # HTML template with full-precision scores
         html = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -446,19 +451,12 @@ def predict_form_post(
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Analysis Result</title>
             <style>
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
-                
                 body {{
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-family: 'Inter', sans-serif;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     min-height: 100vh;
                     padding: 40px 20px;
                 }}
-                
                 .container {{
                     max-width: 900px;
                     margin: 0 auto;
@@ -467,20 +465,6 @@ def predict_form_post(
                     padding: 40px;
                     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
                 }}
-                
-                .back-link {{
-                    display: inline-block;
-                    color: #667eea;
-                    text-decoration: none;
-                    font-size: 14px;
-                    margin-bottom: 30px;
-                    transition: opacity 0.3s;
-                }}
-                
-                .back-link:hover {{
-                    opacity: 0.7;
-                }}
-                
                 .result-badge {{
                     text-align: center;
                     padding: 30px;
@@ -489,53 +473,23 @@ def predict_form_post(
                     border-radius: 20px;
                     margin-bottom: 40px;
                 }}
-                
-                .result-icon {{
-                    font-size: 60px;
-                    margin-bottom: 15px;
-                }}
-                
-                .result-text {{
-                    font-size: 32px;
-                    font-weight: 700;
-                    color: {color};
-                    margin-bottom: 10px;
-                }}
-                
-                .result-subtitle {{
-                    font-size: 16px;
-                    color: #666;
-                }}
-                
+                .result-icon {{ font-size: 60px; margin-bottom: 15px; }}
+                .result-text {{ font-size: 32px; font-weight: 700; color: {color}; margin-bottom: 10px; }}
+                .result-subtitle {{ font-size: 16px; color: #666; }}
                 .scores-grid {{
                     display: grid;
                     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
                     gap: 20px;
                     margin-bottom: 30px;
                 }}
-                
                 .score-card {{
                     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
                     padding: 25px;
                     border-radius: 16px;
                     text-align: center;
                 }}
-                
-                .score-label {{
-                    font-size: 12px;
-                    color: #666;
-                    margin-bottom: 10px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                }}
-                
-                .score-value {{
-                    font-size: 36px;
-                    font-weight: 700;
-                    color: #1a1a1a;
-                }}
-                
+                .score-label {{ font-size: 12px; color: #666; margin-bottom: 10px; font-weight: 600; }}
+                .score-value {{ font-size: 36px; font-weight: 700; color: #1a1a1a; }}
                 .score-bar {{
                     width: 100%;
                     height: 8px;
@@ -544,49 +498,23 @@ def predict_form_post(
                     margin-top: 10px;
                     overflow: hidden;
                 }}
-                
                 .score-fill {{
                     height: 100%;
                     background: linear-gradient(90deg, #667eea, #764ba2);
                     border-radius: 4px;
+                    width: {max_score*100}%;
                     transition: width 0.5s ease;
                 }}
-                
                 .email-details {{
                     background: #fafafa;
                     padding: 25px;
                     border-radius: 16px;
                     margin-bottom: 30px;
                 }}
-                
-                .detail-row {{
-                    margin-bottom: 20px;
-                    padding-bottom: 20px;
-                    border-bottom: 1px solid #e0e0e0;
-                }}
-                
-                .detail-row:last-child {{
-                    margin-bottom: 0;
-                    padding-bottom: 0;
-                    border-bottom: none;
-                }}
-                
-                .detail-label {{
-                    font-size: 12px;
-                    font-weight: 600;
-                    color: #666;
-                    margin-bottom: 8px;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                }}
-                
-                .detail-value {{
-                    font-size: 14px;
-                    color: #333;
-                    line-height: 1.6;
-                    word-break: break-word;
-                }}
-                
+                .detail-row {{ margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0; }}
+                .detail-label {{ font-size: 12px; font-weight: 600; color: #666; margin-bottom: 8px; }}
+                .detail-value {{ font-size: 14px; color: #333; line-height: 1.6; word-break: break-word; }}
+                .center {{ text-align: center; }}
                 .action-button {{
                     display: inline-block;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -596,23 +524,15 @@ def predict_form_post(
                     text-decoration: none;
                     font-weight: 600;
                     transition: all 0.3s ease;
-                    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
                 }}
-                
                 .action-button:hover {{
                     transform: translateY(-2px);
-                    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
-                }}
-                
-                .center {{
-                    text-align: center;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
                 <a href="/predict_form" class="back-link">← Analyze Another Email</a>
-                
                 <div class="result-badge">
                     <div class="result-icon">{icon}</div>
                     <div class="result-text">{result['result']}</div>
@@ -620,50 +540,48 @@ def predict_form_post(
                         {'This email shows signs of phishing. Be cautious!' if is_phishing else 'This email appears to be legitimate.'}
                     </div>
                 </div>
-                
+
                 <div class="scores-grid">
                     <div class="score-card">
                         <div class="score-label">Model 1 Score</div>
-                        <div class="score-value">{score_percent_1}%</div>
+                        <div class="score-value">{score_1}</div>
                         <div class="score-bar">
-                            <div class="score-fill" style="width: {score_percent_1}%"></div>
+                            <div class="score-fill" style="width: {score_1*100}%"></div>
                         </div>
                     </div>
-                    
+
                     <div class="score-card">
                         <div class="score-label">Model 2 Score</div>
-                        <div class="score-value">{score_percent_2}%</div>
+                        <div class="score-value">{score_2}</div>
                         <div class="score-bar">
-                            <div class="score-fill" style="width: {score_percent_2}%"></div>
+                            <div class="score-fill" style="width: {score_2*100}%"></div>
                         </div>
                     </div>
-                    
+
                     <div class="score-card">
                         <div class="score-label">Final Score (Max)</div>
-                        <div class="score-value">{max_score_percent}%</div>
+                        <div class="score-value">{max_score}</div>
                         <div class="score-bar">
-                            <div class="score-fill" style="width: {max_score_percent}%"></div>
+                            <div class="score-fill" style="width: {max_score*100}%"></div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="email-details">
                     <div class="detail-row">
                         <div class="detail-label">📧 Subject</div>
                         <div class="detail-value">{subject}</div>
                     </div>
-                    
                     <div class="detail-row">
                         <div class="detail-label">👤 Sender</div>
                         <div class="detail-value">{sender}</div>
                     </div>
-                    
                     <div class="detail-row">
                         <div class="detail-label">📄 Email Content (Cleaned)</div>
                         <div class="detail-value">{cleaned_body[:500]}{'...' if len(cleaned_body) > 500 else ''}</div>
                     </div>
                 </div>
-                
+
                 <div class="center">
                     <a href="/predict_form" class="action-button">Analyze Another Email</a>
                 </div>
@@ -671,6 +589,7 @@ def predict_form_post(
         </body>
         </html>
         """
+
         return html
 
     except Exception as e:
